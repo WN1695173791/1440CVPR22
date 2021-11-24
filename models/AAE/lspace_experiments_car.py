@@ -17,7 +17,7 @@ def pc_normalize(pc):
 
 if config1['type']=="objects":
     from models.AAE.AAE_model import *
-    # print("yes")
+    print("yes")
 elif config1['type']=="parts":
     from models.AAE.AAE_model_parts import *
 
@@ -44,12 +44,12 @@ torch.cuda.manual_seed_all(config['seed'])
 device = cuda_setup(config['cuda'], config['gpu'])
 
 
-G_airplane = Generator(config).to(device)
-E_airplane = Encoder(config).to(device)
+G_car = Generator(config).to(device)
+E_car = Encoder(config).to(device)
 D = Discriminator(config).to(device)
 
-G_airplane.apply(weights_init)
-E_airplane.apply(weights_init)
+G_car.apply(weights_init)
+E_car.apply(weights_init)
 D.apply(weights_init)
 
 
@@ -62,25 +62,25 @@ D_optim = getattr(optim, config['optimizer']['D']['type'])
 D_optim = D_optim(D.parameters(),
                   **config['optimizer']['D']['hyperparams'])
 
-E_airplane.load_state_dict(torch.load(encoder_path))
-G_airplane.load_state_dict(torch.load(gen_path))
+E_car.load_state_dict(torch.load(encoder_path))
+G_car.load_state_dict(torch.load(gen_path))
 
-E_airplane.eval()
-G_airplane.eval()
+E_car.eval()
+G_car.eval()
 
 print("model_load_succesful")
 
 def encode(chair):
-    # chair=pc_normalize(chair)
+    chair=pc_normalize(chair)
     av=np.reshape(chair, (config['z_size'],3,1)).T
     codes=torch.from_numpy(av).to('cuda')
     with torch.no_grad():
-        X_rec = E_airplane(codes.float())
+        X_rec = E_car(codes.float())
     return X_rec[0].cpu().numpy()
 
 def reconstruct_from_code(code):
     av=np.reshape(code, (config['z_size'],1,1)).T
     codes=torch.from_numpy(av).to('cuda')
     with torch.no_grad():
-        X_rec = G_airplane(codes.float()).data.cpu().numpy()
+        X_rec = G_car(codes.float()).data.cpu().numpy()
     return X_rec[0]
